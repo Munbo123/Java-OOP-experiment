@@ -12,7 +12,7 @@ public class login extends javax.swing.JFrame {
         // 初始化界面
         initComponents();
     }
-                       
+    
     private void initComponents() {
 
         jButton1 = new javax.swing.JButton();

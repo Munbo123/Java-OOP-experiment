@@ -1,268 +1,295 @@
 package experiment.util;
 
 import java.util.*;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.sql.*;
 import experiment.role.*;
 
+public class DataProcessing {
 
+    private static String uploadpath = "C:\\Users\\19722\\Desktop\\Coding\\GithubProjects\\MyProjects\\JavaExperiment\\untitled\\src\\main\\java\\experiment\\files\\uploadfiles";
+    private static String driverName = "com.mysql.cj.jdbc.Driver";
+    private static String url = "jdbc:mysql://localhost:3306/mydatabase?useUnicode=true&characterEncoding=UTF-8";
+    private static String user = "root";
+    private static String password = "nf3039755985";
 
-public  class DataProcessing {
+    // 创建数据库连接函数
+    public static Connection getConnection() throws SQLException, ClassNotFoundException {
+        Class.forName(driverName);
+        return DriverManager.getConnection(url, user, password);
+    }
 
-	private static String uploadpath="C:\\Users\\19722\\Desktop\\Coding\\GithubProjects\\MyProjects\\JavaExperiment\\untitled\\src\\main\\java\\experiment\\files\\uploadfiles";
-
-
-	static Hashtable<String, User> users;
-	static Hashtable<String, Doc> docs;
-
-
-	static {
-		// 初始化用户和文件，目前暂时用哈希表储存
-		users = new Hashtable<String, User>();
-		users.put("jack", new Operator("jack","123","operator"));
-		users.put("rose", new Browser("rose","123","browser"));
-		users.put("kate", new Administrator("kate","123","administrator"));
-		
-		Timestamp timestamp = new Timestamp(System.currentTimeMillis()); 
-		docs = new Hashtable<String,Doc>();
-		// 读取uploadpath中所有的文件，默认创建者为jack，id从0001开始递增
-		File directory = new File(uploadpath);
-		File[] tempList = directory.listFiles();
-		int id = 1;
-		for (int i = 0; i < tempList.length; i++) {
-			if (tempList[i].isFile()) {
-				Doc doc = new Doc(String.format("%04d", id), "jack", timestamp, tempList[i].getName(), tempList[i].getName());
-				docs.put(String.format("%04d", id), doc);
-				id++;
+// 创建一个函数，用来显示目前数据库中所有的表和表里的数据
+	public static void showAll() {
+		try (Connection connection = getConnection()) {
+			// 显示 user_info 表的数据
+			System.out.println("Table: user_info");
+			ResultSet resultSet = connection.createStatement().executeQuery("SELECT * FROM user_info");
+			ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+			int columnCount = resultSetMetaData.getColumnCount();
+			for (int i = 1; i <= columnCount; i++) {
+				System.out.print(resultSetMetaData.getColumnName(i) + "\t");
 			}
-		}
-
-	}
-	
-
-	public static boolean downloadFile(String id,String downloadpath,String filename) throws SQLException,IOException{
-		//boolean result=false;
-		byte [] buffer = new  byte [1024];
-		Doc doc=DataProcessing.searchDoc(id);
-
-		if (doc==null) {
-			return false ;
-		}
-
-		File tempFile = new File(uploadpath+"\\"+doc.getFilename());
-
-
-		BufferedInputStream infile = new BufferedInputStream(new FileInputStream(tempFile));
-		BufferedOutputStream targetfile = new  BufferedOutputStream(new  FileOutputStream(downloadpath+"\\"+filename));
-
-		while (true){
-			int  byteRead=infile.read(buffer);
-			if  (byteRead==-1) {
-			break ;
-			}
-			targetfile.write(buffer,0,byteRead);
-		}
-		infile.close();
-		targetfile.close();
-
-		return  true ;
-	}
-
-
-	public static boolean uploadFile(String path,String ID,String description,String creator) throws SQLException,IOException{
-		// 实例化文件对象
-		File file = new File(path);		
-		// 获取文件名部分
-		String fileName = file.getName();
-		// 获取文件路径部分
-		String directory = file.getParent();
-
-		// 检查docs中是否已经存在该文件的id
-		if (docs.containsKey(ID)) {
-			return false;
-		}
-		// 检查uploadpath中是否存在同名文件
-		File UploadDirectory = new File(uploadpath);
-		File[] tempList = UploadDirectory.listFiles();
-		for (int i = 0; i < tempList.length; i++) {
-			if (tempList[i].isFile()) {
-				System.out.println(tempList[i].getName());
-				if (tempList[i].getName().equals(file.getName())) {
-					return false;
+			System.out.println();
+			while (resultSet.next()) {
+				for (int i = 1; i <= columnCount; i++) {
+					System.out.print(resultSet.getString(i) + "\t");
 				}
+				System.out.println();
 			}
-		}
+			resultSet.close();
 
-		//boolean result=false;
-		byte [] buffer = new  byte [1024];
-
-		// 获取文件创建时间
-		Timestamp timestamp = new Timestamp(System.currentTimeMillis()); 
-
-		// 创建doc对象
-		Doc doc= new Doc(ID, creator,timestamp,description,fileName);
-		docs.put(ID,doc);	
-
-		File tempFile = new File(directory+"\\"+doc.getFilename());
-		String filename = tempFile.getName();
-
-		BufferedInputStream infile = new BufferedInputStream(new FileInputStream(tempFile));
-		BufferedOutputStream targetfile = new  BufferedOutputStream(new  FileOutputStream(uploadpath+"\\"+filename));
-
-		while (true){
-			int  byteRead=infile.read(buffer);
-			if  (byteRead==-1) {
-			break ;
+			// 显示 docs_info 表的数据
+			System.out.println("Table: docs_info");
+			resultSet = connection.createStatement().executeQuery("SELECT * FROM docs_info");
+			resultSetMetaData = resultSet.getMetaData();
+			columnCount = resultSetMetaData.getColumnCount();
+			for (int i = 1; i <= columnCount; i++) {
+				System.out.print(resultSetMetaData.getColumnName(i) + "\t");
 			}
-			targetfile.write(buffer,0,byteRead);
-		}
-		infile.close();
-		targetfile.close();
-		// 更新docs中的数据
-		docs.put(ID,doc);
-		return  true ;
-	}
-
-
-
-	public static Doc searchDoc(String ID) throws SQLException {
-		if (docs.containsKey(ID)) {
-			Doc temp =docs.get(ID);
-			return temp;
-		}
-		return null;
-	}
-	
-
-	public static Enumeration<Doc> getAllDocs() throws SQLException{		
-		Enumeration<Doc> e  = docs.elements();
-		return e;
-	} 
-	
-
-	public static boolean insertDoc(String ID, String creator, Timestamp timestamp, String description, String filename) throws SQLException{
-		Doc doc;		
-		if (docs.containsKey(ID))
-			return false;
-		else{
-			doc = new Doc(ID,creator,timestamp,description,filename);
-			docs.put(ID, doc);
-			return true;
-		}
-	} 
-	
-
-	public static User searchUser(String name) throws SQLException{
-		// if ( !connectToDB ) 
-		// 	throw new SQLException( "Not Connected to Database" );
-		// double ranValue=Math.random();
-		// if (ranValue>0.5)
-		// 	throw new SQLException( "Error in excecuting Query" );
-		
-		if (users.containsKey(name)) {
-			return users.get(name);			
-		}
-		return null;
-	}
-	
-
-	public static User search(String name, String password) throws SQLException {
-		// if ( !connectToDB ) 
-	    //     throw new SQLException( "Not Connected to Database" );
-		// double ranValue=Math.random();
-		// if (ranValue>0.5)
-		// 	throw new SQLException( "Error in excecuting Query" );
-		
-		if (users.containsKey(name)) {
-			User temp =users.get(name);
-			if ((temp.getPassword()).equals(password))
-				return temp;
-		}
-		return null;
-	}
-	
-
-	public static Enumeration<User> getAllUser() throws SQLException{
-		// if ( !connectToDB ) 
-	    //     throw new SQLException( "Not Connected to Database" );
-		
-		// double ranValue=Math.random();
-		// if (ranValue>0.5)
-		// 	throw new SQLException( "Error in excecuting Query" );
-		
-		Enumeration<User> e  = users.elements();
-		return e;
-	}
-	
-	
-	public static boolean updateUser(String name, String password, String role) throws SQLException{
-		User user;
-		if (users.containsKey(name)) {
-			if (role.equalsIgnoreCase("administrator"))
-				user = new Administrator(name,password, role);
-			else if (role.equalsIgnoreCase("operator"))
-				user = new Operator(name,password, role);
-			else
-				user = new Browser(name,password, role);
-			users.put(name, user);
-			return true;
-		}else
-			return false;
-	}
-	
-
-	public static boolean insertUser(String name, String password, String role) throws SQLException{
-		// if ( !connectToDB ) 
-	    //     throw new SQLException( "Not Connected to Database" );
-		
-		// double ranValue=Math.random();
-		// if (ranValue>0.5)
-		// 	throw new SQLException( "Error in excecuting Insert" );
-
-		User user;
-
-		if (users.containsKey(name))
-			return false;
-		else{
-			if (role.equalsIgnoreCase("administrator"))
-				user = new Administrator(name,password, role);
-			else if (role.equalsIgnoreCase("operator"))
-				user = new Operator(name,password, role);
-			else
-				user = new Browser(name,password, role);
-			users.put(name, user);
-			return true;
+			System.out.println();
+			while (resultSet.next()) {
+				for (int i = 1; i <= columnCount; i++) {
+					System.out.print(resultSet.getString(i) + "\t");
+				}
+				System.out.println();
+			}
+			resultSet.close();
+		} catch (SQLException | ClassNotFoundException e) {
+			e.printStackTrace();
 		}
 	}
-	
 
-	public static boolean deleteUser(String name) throws SQLException{
-		// if ( !connectToDB ) 
-	    //     throw new SQLException( "Not Connected to Database" );
-		
-		// double ranValue=Math.random();
-		// if (ranValue>0.5)
-		// 	throw new SQLException( "Error in excecuting Delete" );
-		
-		if (users.containsKey(name)){
-			users.remove(name);
-			return true;
-		}else
-			return false;
-		
-	}	
-         
-	
+    // 其他函数
+    public static boolean downloadFile(String id, String downloadpath, String filename) throws SQLException, IOException {
+        byte[] buffer = new byte[1024];
+        Doc doc = searchDoc(id);
 
+        if (doc == null) {
+            return false;
+        }
 
-	
-	public static void main(String[] args) {		
+        File tempFile = new File(uploadpath + "\\" + doc.getFilename());
 
-	}
-	
+        BufferedInputStream infile = new BufferedInputStream(new FileInputStream(tempFile));
+        BufferedOutputStream targetfile = new BufferedOutputStream(new FileOutputStream(downloadpath + "\\" + filename));
+
+        while (true) {
+            int byteRead = infile.read(buffer);
+            if (byteRead == -1) {
+                break;
+            }
+            targetfile.write(buffer, 0, byteRead);
+        }
+        infile.close();
+        targetfile.close();
+
+        return true;
+    }
+
+    public static boolean uploadFile(String path, String ID, String description, String creator) throws SQLException, IOException {
+        File file = new File(path);
+        String fileName = file.getName();
+        String directory = file.getParent();
+
+        if (searchDoc(ID) != null) {
+            return false;
+        }
+
+        File UploadDirectory = new File(uploadpath);
+        File[] tempList = UploadDirectory.listFiles();
+        for (int i = 0; i < tempList.length; i++) {
+            if (tempList[i].isFile()) {
+                if (tempList[i].getName().equals(file.getName())) {
+                    return false;
+                }
+            }
+        }
+
+        byte[] buffer = new byte[1024];
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
+        Doc doc = new Doc(ID, creator, timestamp, description, fileName);
+        insertDoc(ID, creator, timestamp, description, fileName);
+
+        File tempFile = new File(directory + "\\" + doc.getFilename());
+        BufferedInputStream infile = new BufferedInputStream(new FileInputStream(tempFile));
+        BufferedOutputStream targetfile = new BufferedOutputStream(new FileOutputStream(uploadpath + "\\" + fileName));
+
+        while (true) {
+            int byteRead = infile.read(buffer);
+            if (byteRead == -1) {
+                break;
+            }
+            targetfile.write(buffer, 0, byteRead);
+        }
+        infile.close();
+        targetfile.close();
+
+        return true;
+    }
+
+    public static Doc searchDoc(String ID) throws SQLException {
+        try (Connection connection = getConnection()) {
+            String query = "SELECT * FROM docs_info WHERE id = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, ID);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                String creator = resultSet.getString("uploader");
+                Timestamp timestamp = resultSet.getTimestamp("upload_time");
+                String description = resultSet.getString("description");
+                String filename = resultSet.getString("filename");
+                return new Doc(ID, creator, timestamp, description, filename);
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static Enumeration<Doc> getAllDocs() throws SQLException {
+        Vector<Doc> docs = new Vector<>();
+        try (Connection connection = getConnection()) {
+            String query = "SELECT * FROM docs_info";
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while (resultSet.next()) {
+                String id = resultSet.getString("ID");
+                String creator = resultSet.getString("uploader");
+                Timestamp timestamp = resultSet.getTimestamp("upload_time");
+                String description = resultSet.getString("description");
+                String filename = resultSet.getString("filename");
+                docs.add(new Doc(id, creator, timestamp, description, filename));
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return docs.elements();
+    }
+
+    public static boolean insertDoc(String ID, String creator, Timestamp timestamp, String description, String filename) throws SQLException {
+        try (Connection connection = getConnection()) {
+            String query = "INSERT INTO docs_info (ID, uploader, upload_time, description, filename) VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, ID);
+            preparedStatement.setString(2, creator);
+            preparedStatement.setTimestamp(3, timestamp);
+            preparedStatement.setString(4, description);
+            preparedStatement.setString(5, filename);
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static User searchUser(String name) throws SQLException {
+        try (Connection connection = getConnection()) {
+            String query = "SELECT * FROM user_info WHERE username = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, name);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                String password = resultSet.getString("password");
+                String role = resultSet.getString("role");
+                if (role.equalsIgnoreCase("administrator"))
+                    return new Administrator(name, password, role);
+                else if (role.equalsIgnoreCase("operator"))
+                    return new Operator(name, password, role);
+                else
+                    return new Browser(name, password, role);
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static User search(String name, String password) throws SQLException {
+        User user = searchUser(name);
+        if (user != null && user.getPassword().equals(password)) {
+            return user;
+        }
+        return null;
+    }
+
+    public static Enumeration<User> getAllUser() throws SQLException {
+        Vector<User> users = new Vector<>();
+        try (Connection connection = getConnection()) {
+            String query = "SELECT * FROM user_info";
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while (resultSet.next()) {
+                String name = resultSet.getString("username");
+                String password = resultSet.getString("password");
+                String role = resultSet.getString("role");
+                if (role.equalsIgnoreCase("administrator"))
+                    users.add(new Administrator(name, password, role));
+                else if (role.equalsIgnoreCase("operator"))
+                    users.add(new Operator(name, password, role));
+                else
+                    users.add(new Browser(name, password, role));
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return users.elements();
+    }
+
+    public static boolean updateUser(String name, String password, String role) throws SQLException {
+        try (Connection connection = getConnection()) {
+            String query = "UPDATE user_info SET password = ?, role = ? WHERE username = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, password);
+            preparedStatement.setString(2, role);
+            preparedStatement.setString(3, name);
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static boolean insertUser(String name, String password, String role) throws SQLException {
+        if (searchUser(name) != null) {
+            return false;
+        }
+        try (Connection connection = getConnection()) {
+            String query = "INSERT INTO user_info (username, password, role) VALUES (?, ?, ?)";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2, password);
+            preparedStatement.setString(3, role);
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static boolean deleteUser(String name) throws SQLException {
+        try (Connection connection = getConnection()) {
+            String query = "DELETE FROM user_info WHERE username = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, name);
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static void main(String[] args) {
+        // 链接数据库，并显示所有表和表中的数据
+		showAll();
+    }
 }

@@ -127,7 +127,6 @@ public class MainPage extends javax.swing.JFrame {
         pack();
     }// </editor-fold>                        
 
-
     public void setMenuItemsEnabled(String role) {
         if (role.equals("administrator")) {
             Menu1.setEnabled(true);
@@ -160,14 +159,14 @@ public class MainPage extends javax.swing.JFrame {
         // 打开用户管理界面的GUI，并切换到删除用户tab
         UserManage userManagement = new UserManage();
         userManagement.setVisible(true);
-        userManagement.switchTab(0);
+        userManagement.switchTab(2);
     }
 
     private void menuItem1_3ActionPerformed(java.awt.event.ActionEvent evt) {
         // 打开用户管理界面的GUI，并切换到新增用户tab
         UserManage userManagement = new UserManage();
         userManagement.setVisible(true);
-        userManagement.switchTab(2);
+        userManagement.switchTab(0);
     }
 
     private void menuItem2_1ActionPerformed(java.awt.event.ActionEvent evt) {

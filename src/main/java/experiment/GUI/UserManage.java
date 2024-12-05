@@ -469,6 +469,10 @@ public class UserManage extends javax.swing.JFrame {
         catch (Exception e) {
             e.printStackTrace();
         }
+        // 更新修改用户tab中的combox
+        setChangeUserTableData();
+        // 更新删除用户tab中的表格
+        setDeleteUserTableData();
     }                                                
 
     private void CancelButton3ActionPerformed(java.awt.event.ActionEvent evt) {                                              
@@ -480,7 +484,7 @@ public class UserManage extends javax.swing.JFrame {
         // 更新密码和角色
         try {
             User user = DataProcessing.searchUser(username2.getSelectedItem().toString());
-            System.out.println(user.getName()+" "+user.getPassword()+" "+user.getRole());
+            // System.out.println(user.getName()+" "+user.getPassword()+" "+user.getRole());
             password2.setText(user.getPassword());
             role2.setSelectedItem(user.getRole());
         } catch (Exception e) {
