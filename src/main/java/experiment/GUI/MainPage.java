@@ -1,10 +1,11 @@
 package experiment.GUI;
 
+import experiment.Client.Client;
 import experiment.role.*;
-
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class MainPage extends javax.swing.JFrame {
-
     public MainPage(User user) {
         // 设置界面居中
         setLocationRelativeTo(null);
@@ -12,9 +13,9 @@ public class MainPage extends javax.swing.JFrame {
         this.user = user;
         initComponents();
         setMenuItemsEnabled(user.getRole());
-    }
 
-                      
+    }
+            
     private void initComponents() {
 
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -29,6 +30,17 @@ public class MainPage extends javax.swing.JFrame {
         MenuItem3_1 = new javax.swing.JMenuItem();
         Menu4 = new javax.swing.JMenu();
         MenuItem4_1 = new javax.swing.JMenuItem();
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                try {
+                    Client.getInstance().sendExit();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }     
+            }
+        });
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -197,19 +209,12 @@ public class MainPage extends javax.swing.JFrame {
     private void menuItem4_1ActionPerformed(java.awt.event.ActionEvent evt) {
         // 退出登录
         this.dispose();
-        login login = new login();
-        login.setVisible(true);
+        login loginPage = new login();
+        loginPage.setVisible(true);
     }
 
-    /**
-     * @param args the command line arguments
-     */
+
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -227,14 +232,6 @@ public class MainPage extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(MainPage.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                User temp_user = new Administrator("jack","123","administrator");
-                new MainPage(temp_user).setVisible(true);
-            }
-        });
     }
 
     // Variables declaration - do not modify       

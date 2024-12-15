@@ -1,12 +1,14 @@
 package experiment.GUI;
 
+import experiment.Client.Client;
 import experiment.role.*;
-import experiment.util.*;
 
 public class EditPersonalInfoPage extends javax.swing.JFrame {
 
-
+    private Client client;
     public EditPersonalInfoPage(User user) {
+        // 获取客户端实例
+        client = Client.getInstance();
         // 窗口居中
         setLocationRelativeTo(null);
         // 初始化界面
@@ -17,6 +19,7 @@ public class EditPersonalInfoPage extends javax.swing.JFrame {
         role.setText(this.user.getRole());
         username.setEditable(false);
         role.setEditable(false);
+
     }
                    
     private void initComponents() {
@@ -33,7 +36,7 @@ public class EditPersonalInfoPage extends javax.swing.JFrame {
         NewPassword = new javax.swing.JPasswordField();
         ConfirmNewPassword = new javax.swing.JPasswordField();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("个人信息管理");
 
         jLabel1.setFont(new java.awt.Font("楷体", 1, 14)); // NOI18N
@@ -183,7 +186,9 @@ public class EditPersonalInfoPage extends javax.swing.JFrame {
             this.user.setPassword(newPassword);
             // 修改DataProcessing中的用户信息
             try {
-                DataProcessing.updateUser(user.getName(), newPassword, user.getRole());
+                // DataProcessing.updateUser(user.getName(), newPassword, user.getRole());
+                // 向服务器发送请求并获取响应
+                client.writeAndReadMessage("updateUser " + user.getName() + " " + newPassword + " " + user.getRole());
             } catch (Exception e) {
                 e.printStackTrace();
             }

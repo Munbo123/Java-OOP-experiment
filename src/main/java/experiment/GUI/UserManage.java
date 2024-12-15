@@ -1,8 +1,9 @@
 package experiment.GUI;
 
-import experiment.util.DataProcessing;
+import java.util.Vector;
+
 import experiment.role.*;
-import java.util.Enumeration;
+import experiment.Client.Client;
 
 
 /**
@@ -12,8 +13,10 @@ import java.util.Enumeration;
  * 3. 删除用户
  */
 public class UserManage extends javax.swing.JFrame {
-
+    private Client client;
     public UserManage() {
+        // 获取客户端实例
+        client = Client.getInstance();
         // 窗口居中
         setLocationRelativeTo(null);
         // 初始化界面
@@ -22,6 +25,7 @@ public class UserManage extends javax.swing.JFrame {
         setDeleteUserTableData();
         // 选择一下修改用户信息的username框，让密码和角色框显示第一个用户的信息
         username2.setSelectedIndex(0);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     }
 
     // 切换到特定tab的函数
@@ -33,10 +37,14 @@ public class UserManage extends javax.swing.JFrame {
     public void setChangeUserTableData() {
         java.util.ArrayList<String> data = new java.util.ArrayList<>();
         try {
-            Enumeration<User> e = DataProcessing.getAllUser();
-            while (e.hasMoreElements()) {
-                data.add(e.nextElement().getName());
+            // 向服务端发送命令并获取响应
+            Vector<User> users = (Vector<User>) client.writeAndReadMessage("getAllUser");
+
+            for (User user : users) {
+                data.add(user.getName());
             }
+            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -49,9 +57,10 @@ public class UserManage extends javax.swing.JFrame {
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) UserTable.getModel();
         model.setRowCount(0);
         try {
-            Enumeration<User> e = DataProcessing.getAllUser();
-            while (e.hasMoreElements()) {
-                User user = e.nextElement();
+            // 向服务端发送命令并获取响应
+            Vector<User> users = (Vector<User>) client.writeAndReadMessage("getAllUser");
+
+            for (User user : users) {
                 model.addRow(new Object[]{user.getName(), user.getPassword(), user.getRole()});
             }
         }
@@ -390,8 +399,14 @@ public class UserManage extends javax.swing.JFrame {
             // 弹出确认新增用户提示框
             int result = javax.swing.JOptionPane.showConfirmDialog(this, "确认新增用户？", "确认", javax.swing.JOptionPane.YES_NO_OPTION);
             if (result == javax.swing.JOptionPane.YES_OPTION) {
-                DataProcessing.insertUser(username, password, role);
-                javax.swing.JOptionPane.showMessageDialog(this, "新增用户成功！");
+                // DataProcessing.insertUser(username, password, role);
+                // 向服务端发送命令
+                String response = (String) client.writeAndReadMessage("insertUser " + username + " " + password + " " + role);
+                if (response.startsWith("true")) {
+                    javax.swing.JOptionPane.showMessageDialog(this, "新增用户成功！");
+                } else {
+                    javax.swing.JOptionPane.showMessageDialog(this, response, "错误", javax.swing.JOptionPane.ERROR_MESSAGE);
+                }
             }else {
                 return;
             } 
@@ -421,8 +436,14 @@ public class UserManage extends javax.swing.JFrame {
             // 弹出确认更新用户信息提示框
             int result = javax.swing.JOptionPane.showConfirmDialog(this, "确认更新用户信息？", "确认", javax.swing.JOptionPane.YES_NO_OPTION);
             if (result == javax.swing.JOptionPane.YES_OPTION) {
-                DataProcessing.updateUser(username, password, role);
-                javax.swing.JOptionPane.showMessageDialog(this, "更新用户信息成功！");
+                // DataProcessing.updateUser(username, password, role);
+                // 向服务端发送命令并获取响应
+                String response = (String) client.writeAndReadMessage("updateUser " + username + " " + password + " " + role);
+                if (response.startsWith("true")) {
+                    javax.swing.JOptionPane.showMessageDialog(this, "更新用户信息成功！");
+                } else {
+                    javax.swing.JOptionPane.showMessageDialog(this, response, "错误", javax.swing.JOptionPane.ERROR_MESSAGE);
+                }
             }else {
                 return;
             } 
@@ -460,8 +481,14 @@ public class UserManage extends javax.swing.JFrame {
             // 弹出确认删除用户提示框
             int result = javax.swing.JOptionPane.showConfirmDialog(this, "确认删除用户？", "确认", javax.swing.JOptionPane.YES_NO_OPTION);
             if (result == javax.swing.JOptionPane.YES_OPTION) {
-                DataProcessing.deleteUser(username);
-                javax.swing.JOptionPane.showMessageDialog(this, "删除用户成功！");
+                // DataProcessing.deleteUser(username);
+                // 向服务端发送命令并获取响应
+                String response = (String) client.writeAndReadMessage("deleteUser " + username);
+                if (response.startsWith("true")) {
+                    javax.swing.JOptionPane.showMessageDialog(this, "删除用户成功！");
+                } else {
+                    javax.swing.JOptionPane.showMessageDialog(this, response, "错误", javax.swing.JOptionPane.ERROR_MESSAGE);
+                }
             }else {
                 return;
             } 
@@ -483,7 +510,11 @@ public class UserManage extends javax.swing.JFrame {
     private void username2ActionPerformed(java.awt.event.ActionEvent evt) {                                          
         // 更新密码和角色
         try {
-            User user = DataProcessing.searchUser(username2.getSelectedItem().toString());
+            // User user = DataProcessing.searchUser(username2.getSelectedItem().toString());
+            String username = username2.getSelectedItem().toString();
+            // 向服务端发送命令
+            User user = (User)client.writeAndReadMessage("searchUser " + username);
+
             // System.out.println(user.getName()+" "+user.getPassword()+" "+user.getRole());
             password2.setText(user.getPassword());
             role2.setSelectedItem(user.getRole());
@@ -492,15 +523,8 @@ public class UserManage extends javax.swing.JFrame {
         }
     }                                         
 
-    /**
-     * @param args the command line arguments
-     */
+
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -518,13 +542,6 @@ public class UserManage extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(UserManage.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new UserManage().setVisible(true);
-            }
-        });
     }
 
     // Variables declaration - do not modify                     

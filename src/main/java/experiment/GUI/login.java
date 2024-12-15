@@ -1,12 +1,15 @@
 package experiment.GUI;
 
-import experiment.util.DataProcessing;
 import experiment.role.*;
+import experiment.Client.Client;
 
 
 public class login extends javax.swing.JFrame {
+    private Client client;
 
     public login() {
+        // 创建客户端实例
+        client = Client.getInstance();
         // 设置界面居中
         setLocationRelativeTo(null);
         // 初始化界面
@@ -113,28 +116,35 @@ public class login extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {                                         
         String username = jTextField1.getText();
         String password = new String(jPasswordField1.getPassword());
+
+        User user = null;
         try {
-            User user = DataProcessing.search(username, password);
-            if(user!=null){
-                MainPage mainPage = new MainPage(user);
-                mainPage.setVisible(true);
-                mainPage.setMenuItemsEnabled(user.getRole());
-                // 根据user中role属性的不同，设置窗口名称
-                if(user.getRole().equals("Administrator"))
-                    mainPage.setTitle("管理员界面");
-                else if(user.getRole().equals("Operator"))
-                    mainPage.setTitle("操作员界面");
-                else
-                    mainPage.setTitle("用户界面");
-                this.dispose(); // 关闭当前登录窗口
-            }
-            else{
-                javax.swing.JOptionPane.showMessageDialog(this, "密码错误，请重试", "错误", javax.swing.JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (Exception e) {
+            user = (User) client.writeAndReadMessage("search " + username + " " + password);     
+        }
+        catch (Exception e) {
             System.out.println(e.getMessage());
         }
-    }                                        
+            
+            
+        if(user!=null){
+            this.setVisible(false);
+            MainPage mainPage = new MainPage(user);
+            mainPage.setVisible(true);
+            mainPage.setMenuItemsEnabled(user.getRole());
+            // 根据user中role属性的不同，设置窗口名称
+            if(user.getRole().equals("Administrator"))
+                mainPage.setTitle("管理员界面");
+            else if(user.getRole().equals("Operator"))
+                mainPage.setTitle("操作员界面");
+            else
+                mainPage.setTitle("用户界面");
+            this.dispose();
+        }
+        else{
+            javax.swing.JOptionPane.showMessageDialog(this, "密码错误，请重试", "错误", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
+                                         
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {                                         
         System.exit(0);
@@ -178,6 +188,7 @@ public class login extends javax.swing.JFrame {
             }
         });
     }
+
 
     // Variables declaration - do not modify                     
     private javax.swing.JButton jButton1;

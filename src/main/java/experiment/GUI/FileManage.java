@@ -1,19 +1,24 @@
 package experiment.GUI;
 
-import experiment.util.DataProcessing;
+import java.util.Vector;
+
+import experiment.Client.Client;
 import experiment.role.*;
 import experiment.util.Doc;
 
 
 public class FileManage extends javax.swing.JFrame {
-
+    private Client client;
     public FileManage(User user) {
+        // 获取客户端实例
+        client = Client.getInstance();
         // 设置界面居中
         setLocationRelativeTo(null);
         // 初始化界面
         this.user = user;
         initComponents();
         updateTable();
+
     }
                 
     private void initComponents() {
@@ -35,7 +40,7 @@ public class FileManage extends javax.swing.JFrame {
         filename = new javax.swing.JTextField();
         jTextArea1 = new javax.swing.JTextArea();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("文件管理界面");
 
         TabbedPane1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -241,16 +246,21 @@ public class FileManage extends javax.swing.JFrame {
     // 更新table的函数，从dataproccessing中获取数据
     private void updateTable() {
         try {
-            java.util.Enumeration<Doc> docs = DataProcessing.getAllDocs();
-            int i = 0;
-            while (docs.hasMoreElements()) {
-                Doc doc = docs.nextElement();
-                Table1.setValueAt(doc.getID(), i, 0);
-                Table1.setValueAt(doc.getCreator(), i, 1);
-                Table1.setValueAt(doc.getTimestamp(), i, 2);
-                Table1.setValueAt(doc.getFilename(), i, 3);
-                Table1.setValueAt(doc.getDescription(), i, 4);
-                i++;
+            
+            // 向服务器发送请求并获取返回的请求
+            Vector<Doc> docs = (Vector<Doc>)client.writeAndReadMessage("getAllDocs");
+            // 清空table
+            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) Table1.getModel();
+            model.setRowCount(0);
+            // 更新table
+            for (Doc doc : docs) {
+                Vector<String> row = new Vector<>();
+                row.add(doc.getID());
+                row.add(doc.getCreator());
+                row.add(doc.getTimestamp().toString());
+                row.add(doc.getFilename());
+                row.add(doc.getDescription());
+                model.addRow(row);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -287,10 +297,16 @@ public class FileManage extends javax.swing.JFrame {
                         String downloadpath = file.getParent();
                         String filename = file.getName();
 
-                    DataProcessing.downloadFile(id, downloadpath, filename);
+                    // DataProcessing.downloadFile(id, downloadpath, filename);
+                    // 向服务器发送请求并获取返回的请求
+                    String response = (String) client.writeAndReadMessage("downloadFile " + id + " " + downloadpath + " " + filename);
+                    // 获取服务器返回的数据
+                    if (response.equals("true")){
+                        // 弹出下载成功提示框
+                        javax.swing.JOptionPane.showMessageDialog(this, "下载成功！", "提示", javax.swing.JOptionPane.INFORMATION_MESSAGE);
                     }
-                    // 弹出下载成功提示框
-                    javax.swing.JOptionPane.showMessageDialog(this, "下载成功！", "提示", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -308,7 +324,10 @@ public class FileManage extends javax.swing.JFrame {
         String filePath = filename.getText();
         // 检查docs中是否已经存在该文件的id
         try {
-            if (DataProcessing.searchDoc(fileId) != null) {
+            Doc res = null;
+            // 向服务器发送请求并获取返回的请求
+            res = (Doc) client.writeAndReadMessage("searchDoc " + fileId);
+            if (res != null) {
                 javax.swing.JOptionPane.showMessageDialog(this, "档案号已存在，请重新输入！", "提示", javax.swing.JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -319,7 +338,9 @@ public class FileManage extends javax.swing.JFrame {
 
 
         try {
-            if (DataProcessing.uploadFile(filePath, fileId, description,this.user.getName())) {
+            // 向服务器发送请求并获取返回的请求
+            String response = (String) client.writeAndReadMessage("uploadFile " + filePath + " " + fileId + " " + description + " " + this.user.getName());
+            if (response.startsWith("true")) {
                 // 上传成功后，更新table
                 updateTable();
                 // 弹出消息框：文件上传成功！
@@ -401,6 +422,7 @@ public class FileManage extends javax.swing.JFrame {
             }
         });
     }
+
 
     // Variables declaration - do not modify   
     private User user;                  

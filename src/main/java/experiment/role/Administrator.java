@@ -1,8 +1,9 @@
 package experiment.role;
 
 import java.util.Scanner;
+import java.util.Vector;
 
-import experiment.util.DataProcessing;
+import experiment.Server.DataProcessing;
 import experiment.util.scannerutil;
 
 // Administrator类
@@ -96,10 +97,9 @@ public class Administrator extends Operator{
                 case 4:{
                     // 列出用户
                     try {
-                        var e1 = DataProcessing.getAllUser();
-                        while (e1.hasMoreElements()) {
-                            User temp = e1.nextElement();
-                            System.out.println(temp.getName()+' '+temp.getPassword()+' '+temp.getRole());;
+                        Vector<User> e1 = DataProcessing.getAllUser();
+                        for (User user : e1) {
+                            System.out.println(user);
                         }
                     } catch (Exception e) {
                         System.out.println(e.getMessage());

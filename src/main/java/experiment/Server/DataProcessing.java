@@ -1,9 +1,10 @@
-package experiment.util;
+package experiment.Server;
 
 import java.util.*;
 import java.io.*;
 import java.sql.*;
 import experiment.role.*;
+import experiment.util.Doc;
 
 public class DataProcessing {
 
@@ -149,7 +150,7 @@ public class DataProcessing {
         return null;
     }
 
-    public static Enumeration<Doc> getAllDocs() throws SQLException {
+    public static Vector<Doc> getAllDocs() throws SQLException {
         Vector<Doc> docs = new Vector<>();
         try (Connection connection = getConnection()) {
             String query = "SELECT * FROM docs_info";
@@ -167,7 +168,7 @@ public class DataProcessing {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return docs.elements();
+        return docs;
     }
 
     public static boolean insertDoc(String ID, String creator, Timestamp timestamp, String description, String filename) throws SQLException {
@@ -218,7 +219,7 @@ public class DataProcessing {
         return null;
     }
 
-    public static Enumeration<User> getAllUser() throws SQLException {
+    public static Vector<User> getAllUser() throws SQLException {
         Vector<User> users = new Vector<>();
         try (Connection connection = getConnection()) {
             String query = "SELECT * FROM user_info";
@@ -239,7 +240,7 @@ public class DataProcessing {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return users.elements();
+        return users;
     }
 
     public static boolean updateUser(String name, String password, String role) throws SQLException {
